@@ -1,41 +1,62 @@
 #!/bin/bash
-# Tiny bash script to run very simple tests
+# Tiny bash script to run very simple tests. Fun fact: I don't know Bash at all XD
+
+FILE='tests.txt'
+
+
+split_result=()
+function split_str {
+	text=$1
+	delim=$2
+	string=$text$delim
+
+	# https://linuxhint.com/bash_split_examples
+	split_result=()
+	while [[ $string ]]; do
+		split_result+=("${string%%"$delim"*}")
+		string=${string#*"$delim"}
+	done
+}
 
 
 # Resolve runner
 runner=$1
 shift
-if [ "$runner" == "py" ] || [ "$runner" == "python" ] || [ "$runner" == "python3" ]; then
+if [ "$runner" = "py" ] || [ "$runner" = "python" ] || [ "$runner" = "python3" ]; then
 	runner='python3'
 else
 	echo "unknown runner '$runner'"
+	exit 1
 fi
 
 
-case_num=1
-while true; do
-	# Resolve input/output files
-	input_file="$case_num.in.txt"
-	output_file="$case_num.out.txt"
+# Make sure cases file exists
+if ! [ -f $FILE ]; then
+	echo "cannot find test case file ('$FILE')"
+	exit 1
+fi
 
-	if ! [ -f $input_file ]; then
-		break
-	elif ! [ -f $output_file ]; then
-		echo "no output file '$output_file'"
-		exit 1
-	fi
-	
+# Read + split input file
+raw=$(cat $FILE; echo '.'); raw=${raw%.} # https://unix.stackexchange.com/a/10804
+split_str "$raw" $'===\n'; cases=("${split_result[@]}")
+
+case_num=1
+for case in "${cases[@]}"; do
+	split_str "$case" $'---\n'; parts=("${split_result[@]}")
+
+	input=${parts[0]}
+	expected=${parts[1]}
+
 	# Run program
-	if actual=$($runner "$@" < "$input_file"; echo '.'); then # https://unix.stackexchange.com/a/10804
+	if actual=$($runner "$@" <<< "$input"; echo '.'); then 
 		actual=${actual%.} 
 	else
-		printf "error encountered in case %d, stopping. output:\n%s" "$case_num" "$actual"
+		printf "error encountered in case %d, stopping. Output:\n%s" "$case_num" "$actual"
 		exit 1
 	fi
 
-	# Check result
-	expected=$(cat $output_file; echo '.'); expected=${expected%.}
-	if [ "$actual" == "$expected" ]; then
+	# Test equality
+	if [ "$actual" = "$expected" ]; then
 		echo "$case_num: OK"
 	else
 		printf "%d: Wrong output!\n\nExpected (%d):\n%s\n\nGot (%d):\n%s\n\n" \
