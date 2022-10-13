@@ -1,7 +1,13 @@
 #!/bin/bash
 # Tiny bash script to run very simple tests. Fun fact: I don't know Bash at all XD
 
+VERSION='0.3.0'
+
 FILE='tests.txt'
+CASE_DELIM='==='
+INPUT_DELIM='---'
+
+NL=$'\n'
 
 
 split_result=()
@@ -12,11 +18,77 @@ function split_str {
 
 	# https://linuxhint.com/bash_split_examples
 	split_result=()
-	while [[ $string ]]; do
+	while [ "$string" ]; do
 		split_result+=("${string%%"$delim"*}")
 		string=${string#*"$delim"}
 	done
 }
+
+function print_help_and_exit {
+	cat <<- EOM
+	sest - Risko's minimal and simple testing utility for competitive(?) programming
+
+	Usage: sest [OPTIONS...] RUNNER ARGS...
+
+	Available runners:
+	  py, python, python3                 Python (attempts to call the 'python3' executable)
+
+	Available options:
+	  -h, --help                          Show this help text
+	  --version                           Show version
+	  -f, --file=FILE                     Read tests from FILE instead of ./$FILE
+	  -D, --case-delimiter=CASE_DELIM     Use CASE_DELIM instead of '$CASE_DELIM' for separating cases
+	  -d, --delimiter=DELIM               Use DELIM instead of '$INPUT_DELIM' for separating input/output
+
+	Reads tests from FILE; calls the RUNNER with the given ARGS and test input
+	as stdin; verifies outputs. Example:
+
+	  sest --file=test2.txt py something.py
+
+	FILE should be a normal text file. Cases are separated from each other by
+	CASE_DELIM, and the input/output of each case is separated by DELIM. Newlines
+	after the delimiters are ignored. If your tests fail, check your newlines.
+	EOM
+	exit
+}
+
+function print_version_and_exit {
+	echo $VERSION
+	exit
+}
+
+
+# Parse arguments (https://stackoverflow.com/a/14203146)
+POSITIONAL_ARGS=()
+
+for i in "$@"; do
+	case $i in
+	--help|-h)
+		print_help_and_exit
+		;;
+	--version)
+		print_version_and_exit
+		;;
+	--file=*|-f=*)
+		FILE="${i#*=}"
+		;;
+	--case-delimiter=*|-D=*)
+		CASE_DELIM="${i#*=}"
+		;;
+	--delimiter=*|-d=*)
+		INPUT_DELIM="${i#*=}"
+		;;
+	--* | -*)
+		echo "sest: unknown option '$i'"
+		exit 1
+		;;
+	*)
+		POSITIONAL_ARGS+=("$i")
+		;;
+	esac
+done
+
+set -- "${POSITIONAL_ARGS[@]}" # Restore positional parameters
 
 
 # Resolve runner
@@ -25,46 +97,55 @@ shift
 if [ "$runner" = "py" ] || [ "$runner" = "python" ] || [ "$runner" = "python3" ]; then
 	runner='python3'
 else
-	echo "unknown runner '$runner'"
+	echo "sest: unknown runner '$runner'"
 	exit 1
 fi
 
-
 # Make sure cases file exists
-if ! [ -f $FILE ]; then
-	echo "cannot find test case file ('$FILE')"
+if ! [ -f "$FILE" ]; then
+	echo "sest: '$FILE' is not a file"
 	exit 1
 fi
 
 # Read + split input file
-raw=$(cat $FILE; echo '.'); raw=${raw%.} # https://unix.stackexchange.com/a/10804
-split_str "$raw" $'===\n'; cases=("${split_result[@]}")
+raw=$(cat "$FILE" && echo '.')
+raw=${raw%.} # https://unix.stackexchange.com/a/10804
+split_str "$raw" "$CASE_DELIM$NL"
+cases=("${split_result[@]}")
 
+# Run tests
 case_num=1
 for case in "${cases[@]}"; do
-	split_str "$case" $'---\n'; parts=("${split_result[@]}")
+	split_str "$case" "$INPUT_DELIM$NL"
+	parts=("${split_result[@]}")
+
+	# Check case is formatted correctly
+	num_parts=${#parts[@]}
+	if [ "$num_parts" != 2 ]; then
+		printf "sest: case %d is split up into %d section(s), but exactly 2 are expected\n" "$case_num" "$num_parts"
+		exit 1
+	fi
 
 	input=${parts[0]}
 	expected=${parts[1]}
 
-	# Run program
-	if actual=$($runner "$@" <<< "$input"; echo '.'); then 
+	# Run runner
+	if actual=$($runner "$@" <<< "$input" && echo '.'); then 
 		actual=${actual%.} 
 	else
-		printf "error encountered in case %d, stopping. Output:\n%s" "$case_num" "$actual"
+		printf "Case %d: Runtime error! See above for trace. Output (%d):\n%s\n" "$case_num" ${#actual} "$actual"
 		exit 1
 	fi
 
-	# Test equality
+	# Check equality
 	if [ "$actual" = "$expected" ]; then
-		echo "$case_num: OK"
+		echo "Case $case_num: OK"
 	else
-		printf "%d: Wrong output!\n\nExpected (%d):\n%s\n\nGot (%d):\n%s\n\n" \
+		printf "Case %d: Wrong output!\n\nExpected (%d):\n%s\nGot (%d):\n%s\n" \
 			"$case_num" ${#expected} "$expected" ${#actual} "$actual"
 	fi
 
 	((case_num++))
 done
-
 
 echo "DONE"
