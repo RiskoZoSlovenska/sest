@@ -1,7 +1,7 @@
 #!/bin/bash
 # Tiny bash script to run very simple tests. Fun fact: I don't know Bash at all XD
 
-VERSION='0.3.0'
+VERSION='0.4.0'
 
 FILE='tests.txt'
 CASE_DELIM='==='
