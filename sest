@@ -47,8 +47,8 @@ function print_help_and_exit {
 	the extension of the first argument.
 
 	FILE should be a normal text file. Cases are separated from each other by
-	CASE_DELIM, and the input/output of each case is separated by DELIM. Newlines
-	after the delimiters are ignored. If your tests fail, check your newlines.
+	CASE_DELIM, and the input/output of each case is separated by DELIM.
+	Newlines following delimiters are ignored.
 	EOM
 	exit
 }
@@ -161,7 +161,7 @@ for case in "${cases[@]}"; do
 	if actual=$($runner "$@" <<< "$input" && echo '.'); then 
 		actual=${actual%.} 
 	else
-		printf "Case %d: Runtime error! See above for trace. Output (%d):\n%s\n" "$case_num" ${#actual} "$actual"
+		printf "Case %d: Runtime error! See above for trace.\nOutput (%d):\n%s\n" "$case_num" ${#actual} "$actual"
 		exit 1
 	fi
 
