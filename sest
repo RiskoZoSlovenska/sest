@@ -11,16 +11,15 @@ NL=$'\n'
 RUNNER_PYTHON='python3'
 
 
-split_result=()
 function split_str {
-	text=$1
-	delim=$2
-	string=$text$delim
+	local -n out=$1; out=()
+	local text=$2
+	local delim=$3
+	local string=$text$delim
 
 	# https://linuxhint.com/bash_split_examples
-	split_result=()
 	while [ "$string" ]; do
-		split_result+=("${string%%"$delim"*}")
+		out+=("${string%%"$delim"*}")
 		string=${string#*"$delim"}
 	done
 }
@@ -138,14 +137,12 @@ fi
 # Read + split input file
 raw=$(cat "$FILE" && echo '.')
 raw=${raw%.} # https://unix.stackexchange.com/a/10804
-split_str "$raw" "$CASE_DELIM$NL"
-cases=("${split_result[@]}")
+declare cases; split_str cases "$raw" "$CASE_DELIM$NL"
 
 # Run tests
 case_num=1
 for case in "${cases[@]}"; do
-	split_str "$case" "$INPUT_DELIM$NL"
-	parts=("${split_result[@]}")
+	declare parts; split_str parts "$case" "$INPUT_DELIM$NL"
 
 	# Check case is formatted correctly
 	num_parts=${#parts[@]}
