@@ -8,6 +8,7 @@ CASE_DELIM='==='
 INPUT_DELIM='---'
 
 NL=$'\n'
+RUNNER_PYTHON='python3'
 
 
 split_result=()
@@ -26,24 +27,24 @@ function split_str {
 
 function print_help_and_exit {
 	cat <<- EOM
-	sest - Risko's minimal and simple testing utility for competitive(?) programming
+	sest - Risko's minimal testing utility for competitive(?) programming
 
-	Usage: sest [OPTIONS...] RUNNER ARGS...
-
-	Available runners:
-	  py, python, python3                 Python (attempts to call the 'python3' executable)
+	Usage: sest [OPTIONS...] ARGS...
 
 	Available options:
 	  -h, --help                          Show this help text
 	  --version                           Show version
+	  -r, --runner=RUNNER                 Interpreter to run the tests with
 	  -f, --file=FILE                     Read tests from FILE instead of ./$FILE
 	  -D, --case-delimiter=CASE_DELIM     Use CASE_DELIM instead of '$CASE_DELIM' for separating cases
 	  -d, --delimiter=DELIM               Use DELIM instead of '$INPUT_DELIM' for separating input/output
+	
+	Runners:                         Extensions:              What they do:
+	  py, python, python3              .py, .py3                Python ($RUNNER_PYTHON)
 
 	Reads tests from FILE; calls the RUNNER with the given ARGS and test input
-	as stdin; verifies outputs. Example:
-
-	  sest --file=test2.txt py something.py
+	as stdin; verifies outputs. If no RUNNER is specified, it is guessed from
+	the extension of the first argument.
 
 	FILE should be a normal text file. Cases are separated from each other by
 	CASE_DELIM, and the input/output of each case is separated by DELIM. Newlines
@@ -69,6 +70,18 @@ for i in "$@"; do
 	--version)
 		print_version_and_exit
 		;;
+	--runner=*|-r=*)
+		runner="${i#**=}"
+		case $runner in
+			py|python|python3)
+				runner=$RUNNER_PYTHON
+				;;
+			*)
+				echo "sest: unknown runner '$runner'"
+				exit 1
+				;;
+		esac
+		;;
 	--file=*|-f=*)
 		FILE="${i#*=}"
 		;;
@@ -91,13 +104,28 @@ done
 set -- "${POSITIONAL_ARGS[@]}" # Restore positional parameters
 
 
-# Resolve runner
-runner=$1
-shift
-if [ "$runner" = "py" ] || [ "$runner" = "python" ] || [ "$runner" = "python3" ]; then
-	runner='python3'
-else
-	echo "sest: unknown runner '$runner'"
+# Guess runner
+if [ -z $runner ]; then
+	# https://stackoverflow.com/a/965072
+	base=$(basename -- "$1") 
+	ext="${base##*.}"
+
+	case $ext in
+		py|py3)
+			runner=$RUNNER_PYTHON
+			;;
+		*)
+			echo "sest: unknown extension '$ext' - specify a runner manually"
+			exit 1
+			;;
+	esac
+fi
+
+# Verify runner
+echo "Choosing runner '$runner'"
+
+if [ -z "$(command -v $runner)" ]; then
+	echo "sest: runner '$runner' was not found; verify that it is installed"
 	exit 1
 fi
 
