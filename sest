@@ -11,6 +11,7 @@ file='tests.txt'
 case_delim='==='
 input_delim='---'
 runner=
+requested_case=
 
 
 function split_str {
@@ -39,6 +40,7 @@ function print_help_and_exit {
 	  -f, --file=FILE                     Read tests from FILE instead of ./$file
 	  -D, --case-delimiter=CASE_DELIM     Use CASE_DELIM instead of '$case_delim' for separating cases
 	  -d, --delimiter=DELIM               Use DELIM instead of '$input_delim' for separating input/output
+	  -c, --case=CASE                     The number of the case to run (omit for all)
 	
 	Runners:                         Extensions:              What they do:
 	  py, python, python3              .py, .py3                Python ($RUNNER_PYTHON)
@@ -92,6 +94,9 @@ for i in "$@"; do
 	-d=*|--delimiter=*)
 		input_delim="${i#*=}"
 		;;
+	-c=*|--case=*)
+		requested_case="${i#*=}"
+		;;
 	--* | -*)
 		echo "$NAME: unknown option '$i'"
 		exit 1
@@ -142,8 +147,16 @@ raw=${raw%.} # https://unix.stackexchange.com/a/10804
 declare cases; split_str cases "$raw" "$case_delim$NL"
 
 # Run tests
-case_num=1
+case_num=0
 for case in "${cases[@]}"; do
+	((case_num++))
+
+	# Check for a requested case
+	if [ "$requested_case" ] && [ "$case_num" != "$requested_case" ]; then
+		continue
+	fi
+
+	# Split case
 	declare parts; split_str parts "$case" "$input_delim$NL"
 
 	# Check case is formatted correctly
@@ -171,8 +184,6 @@ for case in "${cases[@]}"; do
 		printf "Case %d: Wrong output!\n\nExpected (%d):\n%s\nGot (%d):\n%s\n" \
 			"$case_num" ${#expected} "$expected" ${#actual} "$actual"
 	fi
-
-	((case_num++))
 done
 
 echo "DONE"
