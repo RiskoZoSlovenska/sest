@@ -6,6 +6,7 @@ VERSION='0.4.0'
 
 NL=$'\n'
 RUNNER_PYTHON='python3'
+FAIL_CODE=64
 
 file='tests.txt'
 case_delim='==='
@@ -56,6 +57,8 @@ extension of the first argument.
 FILE should be a normal text file. Cases are separated from each other by
 CASE_DELIM, and the input/output of each case is separated by DELIM. Newlines
 following delimiters are ignored.
+
+Exits with a special error code of $FAIL_CODE if any tests fail.
 EOM
 	exit
 }
@@ -174,6 +177,7 @@ raw=${raw%.} # https://unix.stackexchange.com/a/10804
 declare cases; split_str cases "$raw" "$case_delim$NL"
 
 # Run tests
+failed=false
 case_num=0
 for case in "${cases[@]}"; do
 	((case_num++))
@@ -200,6 +204,7 @@ for case in "${cases[@]}"; do
 	if actual=$($runner "$@" <<< "$input" && echo '.'); then 
 		actual=${actual%.} 
 	else
+		failed=true
 		printf "${red}Case %d: Runtime error! See above for trace.\n${blue}Output (%d):$normal\n%s\n" \
 			"$case_num" ${#actual} "$actual"
 		continue
@@ -209,9 +214,16 @@ for case in "${cases[@]}"; do
 	if [ "$actual" = "$expected" ]; then
 		echo "${green}Case $case_num: OK$normal"
 	else
+		failed=true
 		printf "${red}Case %d: Wrong output!\n\n${blue}Expected (%d):$normal\n%s\n${blue}Got (%d):$normal\n%s\n" \
 			"$case_num" ${#expected} "$expected" ${#actual} "$actual"
 	fi
 done
 
 echo "${blue}DONE$normal"
+
+if $failed; then
+	exit $FAIL_CODE
+else
+	exit 0
+fi
