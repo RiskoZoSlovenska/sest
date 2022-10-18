@@ -30,31 +30,33 @@ function split_str {
 
 function print_help_and_exit {
 	cat <<- EOM
-	$NAME - Risko's minimal testing utility for competitive(?) programming
+$NAME - Risko's minimal testing utility for competitive(?) programming
 
-	Usage: $NAME [OPTIONS...] ARGS...
+Usage: $NAME [OPTIONS...] ARGS...
 
-	Available options:
-	  -h, --help                          Show this help text
-	  --version                           Show version
-	  -r, --runner=RUNNER                 Interpreter to run the tests with
-	  -f, --file=FILE                     Read tests from FILE instead of ./$file
-	  -D, --case-delimiter=CASE_DELIM     Use CASE_DELIM instead of '$case_delim' for separating cases
-	  -d, --delimiter=DELIM               Use DELIM instead of '$input_delim' for separating input/output
-	  -c, --case=CASE                     The number of the case to run (omit for all)
-	      --color=WHEN                    WHEN is 'auto' (default), 'always' or 'never'
-	
-	Runners:                         Extensions:              What they do:
-	  py, python, python3              .py, .py3                Python ($RUNNER_PYTHON)
+Available options:
+  -h, --help                         Show this help text
+      --version                      Show version
+  -r, --runner=RUNNER                Interpreter to run the tests with
+  -f, --file=FILE                    Read tests from FILE instead of ./$file
+  -D, --case-delimiter=CASE_DELIM    Use CASE_DELIM instead of '$case_delim' for
+                                       separating cases
+  -d, --delimiter=DELIM              Use DELIM instead of '$input_delim' for separating
+                                       input/output
+  -c, --case=CASE                    The case number to run (omit for all)
+      --color=WHEN                   WHEN is 'auto' (def), 'always' or 'never'
 
-	Reads tests from FILE; calls the RUNNER with the given ARGS and test input
-	as stdin; verifies outputs. If no RUNNER is specified, it is guessed from
-	the extension of the first argument.
+Available runners:              Their extensions:         What they are:
+  py, python, python3             .py, .py3                 Python ($RUNNER_PYTHON)
 
-	FILE should be a normal text file. Cases are separated from each other by
-	CASE_DELIM, and the input/output of each case is separated by DELIM.
-	Newlines following delimiters are ignored.
-	EOM
+Reads tests from FILE; calls the RUNNER with the given ARGS and test input as
+stdin; verifies outputs. If no RUNNER is specified, it is guessed from the
+extension of the first argument.
+
+FILE should be a normal text file. Cases are separated from each other by
+CASE_DELIM, and the input/output of each case is separated by DELIM. Newlines
+following delimiters are ignored.
+EOM
 	exit
 }
 
@@ -147,7 +149,7 @@ if [ -z $runner ]; then
 fi
 
 # Verify runner
-echo "${blue}Choosing runner '$runner'$normal"
+echo "${blue}Using runner '$runner'$normal"
 
 if [ -z "$(command -v $runner)" ]; then
 	echo "$NAME: runner '$runner' was not found; verify that it is installed"
