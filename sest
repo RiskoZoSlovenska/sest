@@ -117,6 +117,12 @@ done
 set -- "${positional_args[@]}" # Restore positional parameters
 
 
+# Verify that we have been passed positional arguments
+if [ $# = 0 ]; then
+	echo "$NAME: at least one positional argument is required"
+	exit 1
+fi
+
 # Set up colors (https://unix.stackexchange.com/a/10065)
 # If colors are not requested, the color variables will be empty strings and
 # we can still print them safely.
