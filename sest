@@ -3,12 +3,13 @@
 
 VERSION='0.4.0'
 
-FILE='tests.txt'
-CASE_DELIM='==='
-INPUT_DELIM='---'
-
 NL=$'\n'
 RUNNER_PYTHON='python3'
+
+file='tests.txt'
+case_delim='==='
+input_delim='---'
+runner=
 
 
 function split_str {
@@ -34,9 +35,9 @@ function print_help_and_exit {
 	  -h, --help                          Show this help text
 	  --version                           Show version
 	  -r, --runner=RUNNER                 Interpreter to run the tests with
-	  -f, --file=FILE                     Read tests from FILE instead of ./$FILE
-	  -D, --case-delimiter=CASE_DELIM     Use CASE_DELIM instead of '$CASE_DELIM' for separating cases
-	  -d, --delimiter=DELIM               Use DELIM instead of '$INPUT_DELIM' for separating input/output
+	  -f, --file=FILE                     Read tests from FILE instead of ./$file
+	  -D, --case-delimiter=CASE_DELIM     Use CASE_DELIM instead of '$case_delim' for separating cases
+	  -d, --delimiter=DELIM               Use DELIM instead of '$input_delim' for separating input/output
 	
 	Runners:                         Extensions:              What they do:
 	  py, python, python3              .py, .py3                Python ($RUNNER_PYTHON)
@@ -59,7 +60,7 @@ function print_version_and_exit {
 
 
 # Parse arguments (https://stackoverflow.com/a/14203146)
-POSITIONAL_ARGS=()
+positional_args=()
 
 for i in "$@"; do
 	case $i in
@@ -82,25 +83,25 @@ for i in "$@"; do
 		esac
 		;;
 	-f=*|--file=*)
-		FILE="${i#*=}"
+		file="${i#*=}"
 		;;
 	-D=*|--case-delimiter=*)
-		CASE_DELIM="${i#*=}"
+		case_delim="${i#*=}"
 		;;
 	-d=*|--delimiter=*)
-		INPUT_DELIM="${i#*=}"
+		input_delim="${i#*=}"
 		;;
 	--* | -*)
 		echo "sest: unknown option '$i'"
 		exit 1
 		;;
 	*)
-		POSITIONAL_ARGS+=("$i")
+		positional_args+=("$i")
 		;;
 	esac
 done
 
-set -- "${POSITIONAL_ARGS[@]}" # Restore positional parameters
+set -- "${positional_args[@]}" # Restore positional parameters
 
 
 # Guess runner
@@ -129,20 +130,20 @@ if [ -z "$(command -v $runner)" ]; then
 fi
 
 # Make sure cases file exists
-if ! [ -f "$FILE" ]; then
-	echo "sest: '$FILE' is not a file"
+if ! [ -f "$file" ]; then
+	echo "sest: '$file' is not a file"
 	exit 1
 fi
 
 # Read + split input file
-raw=$(cat "$FILE" && echo '.')
+raw=$(cat "$file" && echo '.')
 raw=${raw%.} # https://unix.stackexchange.com/a/10804
-declare cases; split_str cases "$raw" "$CASE_DELIM$NL"
+declare cases; split_str cases "$raw" "$case_delim$NL"
 
 # Run tests
 case_num=1
 for case in "${cases[@]}"; do
-	declare parts; split_str parts "$case" "$INPUT_DELIM$NL"
+	declare parts; split_str parts "$case" "$input_delim$NL"
 
 	# Check case is formatted correctly
 	num_parts=${#parts[@]}
