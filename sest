@@ -12,6 +12,7 @@ case_delim='==='
 input_delim='---'
 runner=
 requested_case=
+color=auto
 
 
 function split_str {
@@ -41,6 +42,7 @@ function print_help_and_exit {
 	  -D, --case-delimiter=CASE_DELIM     Use CASE_DELIM instead of '$case_delim' for separating cases
 	  -d, --delimiter=DELIM               Use DELIM instead of '$input_delim' for separating input/output
 	  -c, --case=CASE                     The number of the case to run (omit for all)
+	      --color=WHEN                    WHEN is 'auto' (default), 'always' or 'never'
 	
 	Runners:                         Extensions:              What they do:
 	  py, python, python3              .py, .py3                Python ($RUNNER_PYTHON)
@@ -97,6 +99,9 @@ for i in "$@"; do
 	-c=*|--case=*)
 		requested_case="${i#*=}"
 		;;
+	--color=*)
+	    color="${i#*=}"
+		;;
 	--* | -*)
 		echo "$NAME: unknown option '$i'"
 		exit 1
@@ -109,6 +114,20 @@ done
 
 set -- "${positional_args[@]}" # Restore positional parameters
 
+
+# Set up colors (https://unix.stackexchange.com/a/10065)
+# If colors are not requested, the color variables will be empty strings and
+# we can still print them safely.
+if [ "$color" = always ] || { [ "$color" = auto ] && [ -t 1 ]; }; then
+    num_of_colors=$(tput colors)
+
+    if [ "$num_of_colors" ] && [ "$num_of_colors" -ge 8 ]; then # Check if colors are supported
+        normal="$(tput sgr0)"
+        red="$(tput setaf 1)"
+        green="$(tput setaf 2)"
+        blue="$(tput setaf 4)" # 6 is cyan which is lighter and may be more pleasing
+	fi
+fi
 
 # Guess runner
 if [ -z $runner ]; then
@@ -128,7 +147,7 @@ if [ -z $runner ]; then
 fi
 
 # Verify runner
-echo "Choosing runner '$runner'"
+echo "${blue}Choosing runner '$runner'$normal"
 
 if [ -z "$(command -v $runner)" ]; then
 	echo "$NAME: runner '$runner' was not found; verify that it is installed"
@@ -173,17 +192,18 @@ for case in "${cases[@]}"; do
 	if actual=$($runner "$@" <<< "$input" && echo '.'); then 
 		actual=${actual%.} 
 	else
-		printf "Case %d: Runtime error! See above for trace.\nOutput (%d):\n%s\n" "$case_num" ${#actual} "$actual"
+		printf "${red}Case %d: Runtime error! See above for trace.\n${blue}Output (%d):$normal\n%s\n" \
+			"$case_num" ${#actual} "$actual"
 		exit 1
 	fi
 
 	# Check equality
 	if [ "$actual" = "$expected" ]; then
-		echo "Case $case_num: OK"
+		echo "${green}Case $case_num: OK$normal"
 	else
-		printf "Case %d: Wrong output!\n\nExpected (%d):\n%s\nGot (%d):\n%s\n" \
+		printf "${red}Case %d: Wrong output!\n\n${blue}Expected (%d):$normal\n%s\n${blue}Got (%d):$normal\n%s\n" \
 			"$case_num" ${#expected} "$expected" ${#actual} "$actual"
 	fi
 done
 
-echo "DONE"
+echo "${blue}DONE$normal"
