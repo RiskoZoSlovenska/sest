@@ -202,7 +202,7 @@ for case in "${cases[@]}"; do
 	else
 		printf "${red}Case %d: Runtime error! See above for trace.\n${blue}Output (%d):$normal\n%s\n" \
 			"$case_num" ${#actual} "$actual"
-		exit 1
+		continue
 	fi
 
 	# Check equality
