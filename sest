@@ -1,0 +1,49 @@
+#!/bin/bash
+# Tiny bash script to run very simple tests
+
+
+# Resolve runner
+runner=$1
+shift
+if [ "$runner" == "py" ] || [ "$runner" == "python" ] || [ "$runner" == "python3" ]; then
+	runner='python3'
+else
+	echo "unknown runner '$runner'"
+fi
+
+
+case_num=1
+while true; do
+	# Resolve input/output files
+	input_file="$case_num.in.txt"
+	output_file="$case_num.out.txt"
+
+	if ! [ -f $input_file ]; then
+		break
+	elif ! [ -f $output_file ]; then
+		echo "no output file '$output_file'"
+		exit 1
+	fi
+	
+	# Run program
+	if actual=$($runner "$@" < "$input_file"; echo '.'); then # https://unix.stackexchange.com/a/10804
+		actual=${actual%.} 
+	else
+		printf "error encountered in case %d, stopping. output:\n%s" "$case_num" "$actual"
+		exit 1
+	fi
+
+	# Check result
+	expected=$(cat $output_file; echo '.'); expected=${expected%.}
+	if [ "$actual" == "$expected" ]; then
+		echo "$case_num: OK"
+	else
+		printf "%d: Wrong output!\n\nExpected (%d):\n%s\n\nGot (%d):\n%s\n\n" \
+			"$case_num" ${#expected} "$expected" ${#actual} "$actual"
+	fi
+
+	((case_num++))
+done
+
+
+echo "DONE"
