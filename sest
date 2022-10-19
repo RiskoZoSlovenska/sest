@@ -14,6 +14,7 @@ input_delim='---'
 runner=
 requested_case=
 fail_fast=false
+print_output=true
 color=auto
 
 
@@ -47,6 +48,7 @@ Available options:
                                        input/output
   -c, --case=CASE_NUM                Run only one specific test case
   -F, --fast                         Exit immediately on the first test failure
+  -o, --overview                     Do not print actual or expected test output
       --color=WHEN                   WHEN is 'auto' (def), 'always' or 'never'
 
 Available runners:              Their extensions:         What they are:
@@ -108,6 +110,9 @@ for i in "$@"; do
 		;;
 	-F|--fast)
 		fail_fast=true
+		;;
+	-o|--overview)
+		print_output=false
 		;;
 	--color=*)
 	    color="${i#*=}"
@@ -209,8 +214,11 @@ for case in "${cases[@]}"; do
 	if actual=$($runner "$@" <<< "$input" 2>&1 && echo '.'); then 
 		actual=${actual%.} 
 	else
-		printf "${red}Case %d: Runtime error!\n${blue}Output (%d):$normal\n%s\n" \
-			"$case_num" ${#actual} "$actual"
+		echo "${red}Case $case_num: Runtime error!$normal"
+
+		if $print_output; then
+			printf "${blue}Output (%d):$normal\n%s\n" ${#actual} "$actual"
+		fi
 		
 		failed=true
 		if $fail_fast; then break; else continue; fi
@@ -220,8 +228,12 @@ for case in "${cases[@]}"; do
 	if [ "$actual" = "$expected" ]; then
 		echo "${green}Case $case_num: OK$normal"
 	else
-		printf "${red}Case %d: Wrong output!\n\n${blue}Expected (%d):$normal\n%s\n${blue}Got (%d):$normal\n%s\n" \
-			"$case_num" ${#expected} "$expected" ${#actual} "$actual"
+		echo "${red}Case $case_num: Wrong output!$normal"
+
+		if $print_output; then
+			printf "${blue}Expected (%d):$normal\n%s\n${blue}Got (%d):$normal\n%s\n" \
+				${#expected} "$expected" ${#actual} "$actual"
+		fi
 
 		failed=true
 		if $fail_fast; then break; else continue; fi
