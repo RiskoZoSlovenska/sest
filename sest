@@ -206,10 +206,10 @@ for case in "${cases[@]}"; do
 	expected=${parts[1]}
 
 	# Run runner
-	if actual=$($runner "$@" <<< "$input" && echo '.'); then 
+	if actual=$($runner "$@" <<< "$input" 2>&1 && echo '.'); then 
 		actual=${actual%.} 
 	else
-		printf "${red}Case %d: Runtime error! See above for trace.\n${blue}Output (%d):$normal\n%s\n" \
+		printf "${red}Case %d: Runtime error!\n${blue}Output (%d):$normal\n%s\n" \
 			"$case_num" ${#actual} "$actual"
 		
 		failed=true
