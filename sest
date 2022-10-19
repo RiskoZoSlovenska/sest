@@ -198,7 +198,7 @@ for case in "${cases[@]}"; do
 	# Check case is formatted correctly
 	num_parts=${#parts[@]}
 	if [ "$num_parts" != 2 ]; then
-		printf "$NAME: case %d is split up into %d section(s), but exactly 2 are expected\n" "$case_num" "$num_parts"
+		echo "$NAME: case $case_num is split up into $num_parts section(s), but exactly 2 are expected"
 		exit 1
 	fi
 
