@@ -13,6 +13,7 @@ case_delim='==='
 input_delim='---'
 runner=
 requested_case=
+fail_fast=false
 color=auto
 
 
@@ -44,7 +45,8 @@ Available options:
                                        separating cases
   -d, --delimiter=DELIM              Use DELIM instead of '$input_delim' for separating
                                        input/output
-  -c, --case=CASE                    The case number to run (omit for all)
+  -c, --case=CASE_NUM                Run only one specific test case
+  -F, --fast                         Exit immediately on the first test failure
       --color=WHEN                   WHEN is 'auto' (def), 'always' or 'never'
 
 Available runners:              Their extensions:         What they are:
@@ -103,6 +105,9 @@ for i in "$@"; do
 		;;
 	-c=*|--case=*)
 		requested_case="${i#*=}"
+		;;
+	-F|--fast)
+		fail_fast=true
 		;;
 	--color=*)
 	    color="${i#*=}"
@@ -204,19 +209,22 @@ for case in "${cases[@]}"; do
 	if actual=$($runner "$@" <<< "$input" && echo '.'); then 
 		actual=${actual%.} 
 	else
-		failed=true
 		printf "${red}Case %d: Runtime error! See above for trace.\n${blue}Output (%d):$normal\n%s\n" \
 			"$case_num" ${#actual} "$actual"
-		continue
+		
+		failed=true
+		if $fail_fast; then break; else continue; fi
 	fi
 
 	# Check equality
 	if [ "$actual" = "$expected" ]; then
 		echo "${green}Case $case_num: OK$normal"
 	else
-		failed=true
 		printf "${red}Case %d: Wrong output!\n\n${blue}Expected (%d):$normal\n%s\n${blue}Got (%d):$normal\n%s\n" \
 			"$case_num" ${#expected} "$expected" ${#actual} "$actual"
+
+		failed=true
+		if $fail_fast; then break; else continue; fi
 	fi
 done
 
