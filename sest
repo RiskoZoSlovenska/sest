@@ -2,7 +2,7 @@
 # Tiny bash script to run very simple tests. Fun fact: I don't know Bash at all XD
 
 NAME='sest'
-VERSION='0.5.0'
+VERSION='0.5.1'
 
 NL=$'\n'
 RUNNER_PYTHON='python3'
@@ -85,7 +85,7 @@ for i in "$@"; do
 		print_version_and_exit
 		;;
 	-r=*|--runner=*)
-		runner="${i#**=}"
+		runner="${i#*=}"
 		case $runner in
 			py|python|python3)
 				runner=$RUNNER_PYTHON
@@ -153,8 +153,14 @@ fi
 # Guess runner
 if [ -z $runner ]; then
 	# https://stackoverflow.com/a/965072
-	base=$(basename -- "$1") 
-	ext="${base##*.}"
+	base=$(basename -- "$1")
+	namebody=${base#.} # Don't use leading period for checking if there are periods
+	if [ "$namebody" = "${namebody/./}"  ]; then # Check if contains periods by removing and comparing
+		echo "$NAME: no extension present - specify a runner manually"
+		exit 1
+	else
+		ext="${base##*.}"
+	fi
 
 	case $ext in
 		py|py3)
