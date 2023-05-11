@@ -17,6 +17,7 @@ runner=
 needs_compile=false
 requested_case=
 fail_fast=false
+verbose=false
 print_output=true
 color=auto
 
@@ -63,6 +64,7 @@ Available options:
                                        input/output
   -c, --case=CASE_NUM                Run only one specific test case
   -F, --fast                         Exit immediately on the first test failure
+  -v, --verbose                      Be more verbose (mainly when compiling)
   -o, --overview                     Do not print actual or expected test output
       --color=WHEN                   WHEN is 'auto' (def), 'always' or 'never'
 
@@ -135,6 +137,9 @@ for i in "$@"; do
 		;;
 	-F|--fast)
 		fail_fast=true
+		;;
+	-v|--verbose)
+		verbose=true
 		;;
 	-o|--overview)
 		print_output=false
@@ -220,6 +225,8 @@ if $needs_compile; then
 		echo "${red}Compilation error!$normal"
 		echo "$compile_msg"
 		finish false
+	elif $verbose; then
+		echo "$compile_msg"
 	fi
 fi
 
