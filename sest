@@ -22,16 +22,20 @@ print_output=true
 color=auto
 
 
-# Print the closing message and exit. Requires one argument, true/false, which
-# determines whether we're exiting on a success (true) or failure (false).
+# Print the closing message and exits. Takes one argument, an integer, which
+# determines how many errors were encountered and determines the exit code.
 function finish {
-	echo "${blue}DONE$normal"
+	local msg_color=$green
+	local exit_code=0
 
-	if ! $1; then
-		exit $FAIL_CODE
-	else
-		exit 0
+	if [ "$1" != 0 ]; then
+		msg_color=$red
+		exit_code=$FAIL_CODE
 	fi
+
+	echo "${msg_color}$1 failure(s)$normal"
+	echo "${blue}DONE$normal"
+	exit $exit_code
 }
 
 function split_str {
@@ -233,7 +237,7 @@ if $needs_compile; then
 	if ! compile_msg=$($runner -o "$compiled_out" "$@" 2>&1); then
 		echo "${red}Compilation error!$normal"
 		echo "$compile_msg"
-		finish false
+		finish 1
 	elif $verbose; then
 		echo "$compile_msg"
 	fi
@@ -252,6 +256,7 @@ declare cases; split_str cases "$raw" "$case_delim$NL"
 
 # Run tests
 case_num=0
+failure_num=0
 for case in "${cases[@]}"; do
 	((case_num++))
 
@@ -285,7 +290,8 @@ for case in "${cases[@]}"; do
 			printf "${blue}Output (%d):$normal\n%s\n" ${#actual} "$actual"
 		fi
 		
-		if $fail_fast; then finish false; else continue; fi
+		((failure_num++))
+		if $fail_fast; then finish $failure_num; else continue; fi
 	fi
 
 	# Check equality
@@ -299,8 +305,9 @@ for case in "${cases[@]}"; do
 				${#expected} "$expected" ${#actual} "$actual"
 		fi
 
-		if $fail_fast; then finish false; else continue; fi
+		((failure_num++))
+		if $fail_fast; then finish $failure_num; else continue; fi
 	fi
 done
 
-finish true
+finish $failure_num
