@@ -2,7 +2,7 @@
 # Tiny bash script to run very simple tests. Fun fact: I don't know Bash at all XD
 
 NAME='sest'
-VERSION='0.7.0'
+VERSION='0.7.1'
 
 NL=$'\n'
 RUNNER_PYTHON='python3'
@@ -72,10 +72,10 @@ Available options:
   -o, --overview                     Do not print actual or expected test output
       --color=WHEN                   WHEN is 'auto' (def), 'always' or 'never'
 
-Available runners:              Their extensions:         What they are:
-  py, python, python3             .py, .py3                 Python ($RUNNER_PYTHON)
-  c                               .c                        C ($RUNNER_C)
-  c++, cpp                        .cpp                      C++ ($RUNNER_CPP)
+Available runners:             Their extensions:          What they are:
+  py, python, python3            .py, .py3                  Python ($RUNNER_PYTHON)
+  c                              .c                         C ($RUNNER_C)
+  c++, cpp                       .cpp, .cc                  C++ ($RUNNER_CPP)
 
 Reads tests from FILE; calls the RUNNER with the given ARGS and test input as
 stdin; verifies outputs. Handles compilation if necessary. If no RUNNER is
@@ -213,7 +213,7 @@ if [ -z $runner ]; then
 			runner=$RUNNER_C
 			needs_compile=true
 			;;
-		cpp)
+		cpp|cc)
 			runner=$RUNNER_CPP
 			needs_compile=true
 			;;
