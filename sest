@@ -51,7 +51,7 @@ function print_help_and_exit {
 	cat <<- EOM
 $NAME - Risko's minimal testing utility for competitive(?) programming
 
-Usage: $NAME [OPTIONS...] ARGS...
+Usage: $NAME [OPTIONS...] ARGS... [-- ARGS...]
 
 Available options:
   -h, --help                         Show this help text
@@ -94,8 +94,14 @@ function print_version_and_exit {
 
 # Parse arguments (https://stackoverflow.com/a/14203146)
 positional_args=()
+option_parsing_disabled=false
 
 for i in "$@"; do
+	if $option_parsing_disabled; then
+		positional_args+=("$i")
+		continue
+	fi
+
 	case $i in
 	-h|--help)
 		print_help_and_exit
@@ -146,6 +152,9 @@ for i in "$@"; do
 		;;
 	--color=*)
 	    color="${i#*=}"
+		;;
+	--)
+		option_parsing_disabled=true
 		;;
 	--* | -*)
 		echo >&2 "$NAME: unknown option '$i'"
