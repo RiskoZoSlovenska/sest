@@ -9,7 +9,7 @@ Focus is on ease-of-use. Some features include:
 * Dead-simple syntax
 * Coloured and controllable output
 
-Currently only Python is supported, but PRs are more than welcome!
+Currently only Python, C and C++ are supported, but PRs are more than welcome!
 
 
 # Motivation 
@@ -18,7 +18,7 @@ I occasionally participate in programming competitions where you write a small s
 
 This is, of course, tedious and prone to human error, especially when you have multiple test cases. One option is to write all the test case inputs into files and then redirect stdin to read from those files, but this way you still have to run all the cases individually and can't check for invisible errors (such as trailing spaces).
 
-Thus, `sest` was born.
+Thus, `sest` was born as a single-command solution to all the above woes.
 
 
 # Installation

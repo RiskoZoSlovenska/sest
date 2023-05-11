@@ -2,21 +2,36 @@
 # Tiny bash script to run very simple tests. Fun fact: I don't know Bash at all XD
 
 NAME='sest'
-VERSION='0.5.2'
+VERSION='0.6.0'
 
 NL=$'\n'
 RUNNER_PYTHON='python3'
+RUNNER_C='gcc'
+RUNNER_CPP='g++'
 FAIL_CODE=64
 
 file='tests.txt'
 case_delim='==='
 input_delim='---'
 runner=
+needs_compile=false
 requested_case=
 fail_fast=false
 print_output=true
 color=auto
 
+
+# Print the closing message and exit. Requires one argument, true/false, which
+# determines whether we're exiting on a success (true) or failure (false).
+function finish {
+	echo "${blue}DONE$normal"
+
+	if ! $1; then
+		exit $FAIL_CODE
+	else
+		exit 0
+	fi
+}
 
 function split_str {
 	local -n out=$1; out=()
@@ -53,10 +68,12 @@ Available options:
 
 Available runners:              Their extensions:         What they are:
   py, python, python3             .py, .py3                 Python ($RUNNER_PYTHON)
+  c                               .c                        C ($RUNNER_C)
+  c++, cpp                        .cpp                      C++ ($RUNNER_CPP)
 
 Reads tests from FILE; calls the RUNNER with the given ARGS and test input as
-stdin; verifies outputs. If no RUNNER is specified, it is guessed from the
-extension of the first argument.
+stdin; verifies outputs. Handles compilation if necessary. If no RUNNER is
+specified, it is guessed from the extension of the first argument.
 
 FILE should be a normal text file. Cases are separated from each other by
 CASE_DELIM, and the input/output of each case is separated by DELIM. Newlines
@@ -89,6 +106,14 @@ for i in "$@"; do
 		case $runner in
 			py|python|python3)
 				runner=$RUNNER_PYTHON
+				;;
+			c)
+				runner=$RUNNER_C
+				needs_compile=true
+				;;
+			c++|cpp)
+				runner=$RUNNER_CPP
+				needs_compile=true
 				;;
 			*)
 				echo >&2 "$NAME: unknown runner '$runner'"
@@ -166,6 +191,14 @@ if [ -z $runner ]; then
 		py|py3)
 			runner=$RUNNER_PYTHON
 			;;
+		c)
+			runner=$RUNNER_C
+			needs_compile=true
+			;;
+		cpp)
+			runner=$RUNNER_CPP
+			needs_compile=true
+			;;
 		*)
 			echo >&2 "$NAME: unknown extension '$ext' - specify a runner manually"
 			exit 1
@@ -181,6 +214,15 @@ if [ -z "$(command -v $runner)" ]; then
 	exit 1
 fi
 
+if $needs_compile; then
+	compiled_out=$(mktemp)
+	if ! compile_msg=$($runner -o "$compiled_out" "$@" 2>&1); then
+		echo "${red}Compilation error!$normal"
+		echo "$compile_msg"
+		finish false
+	fi
+fi
+
 # Make sure cases file exists
 if ! [ -f "$file" ]; then
 	echo >&2 "$NAME: '$file' is not a file"
@@ -193,7 +235,6 @@ raw=${raw%.} # https://unix.stackexchange.com/a/10804
 declare cases; split_str cases "$raw" "$case_delim$NL"
 
 # Run tests
-failed=false
 case_num=0
 for case in "${cases[@]}"; do
 	((case_num++))
@@ -217,7 +258,9 @@ for case in "${cases[@]}"; do
 	expected=${parts[1]}
 
 	# Run runner
-	if actual=$($runner "$@" <<< "$input" 2>&1 && echo '.'); then 
+	if ! $needs_compile && actual=$($runner "$@" <<< "$input" 2>&1 && echo '.'); then
+		actual=${actual%.} 
+	elif $needs_compile && actual=$($compiled_out <<< "$input" 2>&1 && echo '.'); then 
 		actual=${actual%.} 
 	else
 		echo "${red}Case $case_num: Runtime error!$normal"
@@ -226,8 +269,7 @@ for case in "${cases[@]}"; do
 			printf "${blue}Output (%d):$normal\n%s\n" ${#actual} "$actual"
 		fi
 		
-		failed=true
-		if $fail_fast; then break; else continue; fi
+		if $fail_fast; then finish false; else continue; fi
 	fi
 
 	# Check equality
@@ -241,15 +283,8 @@ for case in "${cases[@]}"; do
 				${#expected} "$expected" ${#actual} "$actual"
 		fi
 
-		failed=true
-		if $fail_fast; then break; else continue; fi
+		if $fail_fast; then finish false; else continue; fi
 	fi
 done
 
-echo "${blue}DONE$normal"
-
-if $failed; then
-	exit $FAIL_CODE
-else
-	exit 0
-fi
+finish true
