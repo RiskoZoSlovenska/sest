@@ -2,7 +2,7 @@
 # Tiny bash script to run very simple tests. Fun fact: I don't know Bash at all XD
 
 NAME='sest'
-VERSION='0.5.1'
+VERSION='0.5.2'
 
 NL=$'\n'
 RUNNER_PYTHON='python3'
@@ -91,7 +91,7 @@ for i in "$@"; do
 				runner=$RUNNER_PYTHON
 				;;
 			*)
-				echo "$NAME: unknown runner '$runner'"
+				echo >&2 "$NAME: unknown runner '$runner'"
 				exit 1
 				;;
 		esac
@@ -118,7 +118,7 @@ for i in "$@"; do
 	    color="${i#*=}"
 		;;
 	--* | -*)
-		echo "$NAME: unknown option '$i'"
+		echo >&2 "$NAME: unknown option '$i'"
 		exit 1
 		;;
 	*)
@@ -132,7 +132,7 @@ set -- "${positional_args[@]}" # Restore positional parameters
 
 # Verify that we have been passed positional arguments
 if [ $# = 0 ]; then
-	echo "$NAME: at least one positional argument is required"
+	echo >&2 "$NAME: at least one positional argument is required"
 	exit 1
 fi
 
@@ -156,7 +156,7 @@ if [ -z $runner ]; then
 	base=$(basename -- "$1")
 	namebody=${base#.} # Don't use leading period for checking if there are periods
 	if [ "$namebody" = "${namebody/./}"  ]; then # Check if contains periods by removing and comparing
-		echo "$NAME: no extension present - specify a runner manually"
+		echo >&2 "$NAME: no extension present - specify a runner manually"
 		exit 1
 	else
 		ext="${base##*.}"
@@ -167,7 +167,7 @@ if [ -z $runner ]; then
 			runner=$RUNNER_PYTHON
 			;;
 		*)
-			echo "$NAME: unknown extension '$ext' - specify a runner manually"
+			echo >&2 "$NAME: unknown extension '$ext' - specify a runner manually"
 			exit 1
 			;;
 	esac
@@ -177,13 +177,13 @@ fi
 echo "${blue}Using runner '$runner'$normal"
 
 if [ -z "$(command -v $runner)" ]; then
-	echo "$NAME: runner '$runner' was not found; verify that it is installed"
+	echo >&2 "$NAME: runner '$runner' was not found; verify that it is installed"
 	exit 1
 fi
 
 # Make sure cases file exists
 if ! [ -f "$file" ]; then
-	echo "$NAME: '$file' is not a file"
+	echo >&2 "$NAME: '$file' is not a file"
 	exit 1
 fi
 
@@ -209,7 +209,7 @@ for case in "${cases[@]}"; do
 	# Check case is formatted correctly
 	num_parts=${#parts[@]}
 	if [ "$num_parts" != 2 ]; then
-		echo "$NAME: case $case_num is split up into $num_parts section(s), but exactly 2 are expected"
+		echo >&2 "$NAME: case $case_num is split up into $num_parts section(s), but exactly 2 are expected"
 		exit 1
 	fi
 
