@@ -1,14 +1,15 @@
 #!/bin/bash
-# Tiny bash script to run very simple tests. Fun fact: I don't know Bash at all XD
+# Tiny bash script to run very simple tests.
+# https://github.com/RiskoZoSlovenska/sest
 
 NAME='sest'
-VERSION='0.7.1'
+VERSION='0.8.0'
 
 NL=$'\n'
 RUNNER_PYTHON='python3'
 RUNNER_C='gcc'
 RUNNER_CPP='g++'
-FAIL_CODE=64
+TESTS_FAILED_CODE=64
 
 file='tests.txt'
 case_delim='==='
@@ -19,7 +20,7 @@ requested_case=
 fail_fast=false
 verbose=false
 print_output=true
-color=auto
+color='auto'
 
 
 # Just like echo but only does something if verbose is true
@@ -30,15 +31,15 @@ function verboseecho() {
 	fi
 }
 
-# Print the closing message and exits. Takes one argument, an integer, which
-# determines how many errors were encountered and determines the exit code.
+# Performs cleanup, prints closing messages and exits with a appropriate code.
+# Takes one argument: the number of errors encountered.
 function finish {
 	local msg_color=$green
 	local exit_code=0
 
 	if [ "$1" != 0 ]; then
 		msg_color=$red
-		exit_code=$FAIL_CODE
+		exit_code=$TESTS_FAILED_CODE
 	fi
 	echo "${msg_color}$1 failure(s)$normal"
 
@@ -50,6 +51,9 @@ function finish {
 	exit $exit_code
 }
 
+# $1: name of output array variable
+# $2: text
+# $3: delimiter
 function split_str {
 	local -n out=$1; out=()
 	local text=$2
@@ -97,7 +101,7 @@ FILE should be a normal text file. Cases are separated from each other by
 CASE_DELIM, and the input/output of each case is separated by DELIM. Newlines
 following delimiters are ignored.
 
-Exits with a special error code of $FAIL_CODE if any tests fail.
+Exits with a special error code of $TESTS_FAILED_CODE if any tests fail.
 EOM
 	exit
 }
@@ -267,12 +271,13 @@ fi
 verboseecho "${blue}Reading test cases from $file...$normal"
 raw=$(cat "$file" && echo '.')
 raw=${raw%.} # https://unix.stackexchange.com/a/10804
-declare cases; split_str cases "$raw" "$case_delim$NL"
+declare cases
+split_str cases "$raw" "$case_delim$NL"
 
 # Run tests
 verboseecho "${blue}Running tests...$normal"
 case_num=0
-failure_num=0
+failures_num=0
 for case in "${cases[@]}"; do
 	((case_num++))
 
@@ -282,7 +287,8 @@ for case in "${cases[@]}"; do
 	fi
 
 	# Split case
-	declare parts; split_str parts "$case" "$input_delim$NL"
+	declare parts
+	split_str parts "$case" "$input_delim$NL"
 
 	# Check case is formatted correctly
 	num_parts=${#parts[@]}
@@ -323,8 +329,8 @@ for case in "${cases[@]}"; do
 			printf "${blue}Output (%d):$normal\n%s\n" ${#actual} "$actual"
 		fi
 		
-		((failure_num++))
-		if $fail_fast; then finish $failure_num; else continue; fi
+		((failures_num++))
+		if $fail_fast; then finish $failures_num; else continue; fi
 	fi
 
 	# Check equality
@@ -338,9 +344,9 @@ for case in "${cases[@]}"; do
 				${#expected} "$expected" ${#actual} "$actual"
 		fi
 
-		((failure_num++))
-		if $fail_fast; then finish $failure_num; else continue; fi
+		((failures_num++))
+		if $fail_fast; then finish $failures_num; else continue; fi
 	fi
 done
 
-finish $failure_num
+finish $failures_num

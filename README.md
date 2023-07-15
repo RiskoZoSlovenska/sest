@@ -23,6 +23,6 @@ Thus, `sest` was born as a single-command solution to all the above woes.
 
 # Installation
 
-The only dependency is a non-ancient Bash.
+The only dependencies are a non-ancient Bash and common commands that should be available on any sane system.
 
 Just clone/download the repo/file and then copy/move/link the file to your `bin` folder.
