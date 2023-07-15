@@ -22,6 +22,14 @@ print_output=true
 color=auto
 
 
+# Just like echo but only does something if verbose is true
+function verboseecho() {
+	if $verbose; then
+		echo "$@"
+		return
+	fi
+}
+
 # Print the closing message and exits. Takes one argument, an integer, which
 # determines how many errors were encountered and determines the exit code.
 function finish {
@@ -234,12 +242,14 @@ fi
 
 if $needs_compile; then
 	compiled_out=$(mktemp)
+	verboseecho "${blue}Compiling to $compiled_out...$normal"
+	
 	if ! compile_msg=$($runner -o "$compiled_out" "$@" 2>&1); then
 		echo "${red}Compilation error!$normal"
 		echo "$compile_msg"
 		finish 1
-	elif $verbose; then
-		echo "$compile_msg"
+	else
+		verboseecho "$compile_msg"
 	fi
 fi
 
@@ -250,11 +260,13 @@ if ! [ -f "$file" ]; then
 fi
 
 # Read + split input file
+verboseecho "${blue}Reading test cases from $file...$normal"
 raw=$(cat "$file" && echo '.')
 raw=${raw%.} # https://unix.stackexchange.com/a/10804
 declare cases; split_str cases "$raw" "$case_delim$NL"
 
 # Run tests
+verboseecho "${blue}Running tests...$normal"
 case_num=0
 failure_num=0
 for case in "${cases[@]}"; do
