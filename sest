@@ -294,13 +294,30 @@ for case in "${cases[@]}"; do
 	input=${parts[0]}
 	expected=${parts[1]}
 
-	# Run runner
-	if ! $needs_compile && actual=$($runner "$@" <<< "$input" 2>&1 && echo '.'); then
-		actual=${actual%.} 
-	elif $needs_compile && actual=$($compiled_out <<< "$input" 2>&1 && echo '.'); then 
-		actual=${actual%.} 
+	# Run
+	if ! $needs_compile; then
+		actual="$($runner "$@" <<< "$input" 2>&1; echo ".$?")"
 	else
-		echo "${red}Case $case_num: Runtime error!$normal"
+		actual="$($compiled_out <<< "$input" 2>&1; echo ".$?")"
+	fi
+
+	# Extract exit code from output
+	runner_exit_code="$(grep -Eo '[0-9]+$' <<< "$actual" | tail -1)" # https://stackoverflow.com/a/44092231 and other replies
+	actual="${actual%."$runner_exit_code"}"
+
+	# Handle failure
+	if [ "$runner_exit_code" != 0 ]; then
+		err_desc="error"
+		if [ "$runner_exit_code" -gt 128 ]; then
+			err_desc="$(kill -l $(("$runner_exit_code"-128)))"
+		fi
+		case $err_desc in
+			SEGV) err_desc="segmentation fault" ;;
+			FPE)  err_desc="floating point exception" ;;
+			INT)  err_desc="interrupted" ;;
+		esac
+
+		echo "${red}Case $case_num: Runtime error! (code $runner_exit_code: $err_desc)$normal"
 
 		if $print_output; then
 			printf "${blue}Output (%d):$normal\n%s\n" ${#actual} "$actual"
