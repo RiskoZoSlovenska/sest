@@ -40,8 +40,12 @@ function finish {
 		msg_color=$red
 		exit_code=$FAIL_CODE
 	fi
-
 	echo "${msg_color}$1 failure(s)$normal"
+
+	if [ -f "$compiled_out" ]; then
+		verboseecho "${blue}Removing $compiled_out...$normal"
+		rm "$compiled_out"
+	fi
 	echo "${blue}DONE$normal"
 	exit $exit_code
 }
