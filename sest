@@ -31,7 +31,7 @@ function verboseecho() {
 	fi
 }
 
-# Performs cleanup, prints closing messages and exits with a appropriate code.
+# Performs cleanup, prints closing messages and exits with an appropriate code.
 # Takes one argument: the number of errors encountered.
 function finish {
 	local msg_color=$green
@@ -251,7 +251,7 @@ fi
 if $needs_compile; then
 	compiled_out=$(mktemp)
 	verboseecho "${blue}Compiling to $compiled_out...$normal"
-	
+
 	if ! compile_msg=$($runner -o "$compiled_out" "$@" 2>&1); then
 		echo "${red}Compilation error!$normal"
 		echo "$compile_msg"
@@ -328,7 +328,7 @@ for case in "${cases[@]}"; do
 		if $print_output; then
 			printf "${blue}Output (%d):$normal\n%s\n" ${#actual} "$actual"
 		fi
-		
+
 		((failures_num++))
 		if $fail_fast; then finish $failures_num; else continue; fi
 	fi

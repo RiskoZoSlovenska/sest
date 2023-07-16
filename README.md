@@ -12,7 +12,7 @@ Focus is on ease-of-use. Some features include:
 Currently only Python, C and C++ are supported, but PRs are more than welcome!
 
 
-# Motivation 
+# Motivation
 
 I occasionally participate in programming competitions where you write a small script to read some input from stdin and print the answer to stdout. If you ever want to test the program before submitting it for evaluation, you have to run it through terminal, copy-paste the input and then compare the output with the expected output.
 
