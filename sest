@@ -18,6 +18,7 @@ runner=
 needs_compile=false
 requested_case=
 fail_fast=false
+tee_dest=/dev/null
 verbose=false
 print_output=true
 color='auto'
@@ -84,6 +85,7 @@ Available options:
                                        input/output
   -c, --case=CASE_NUM                Run only one specific test case
   -F, --fast                         Exit immediately on the first test failure
+  -R, --reveal                       Mirror program output to the terminal
   -v, --verbose                      Be more verbose (mainly when compiling)
   -o, --overview                     Do not print actual or expected test output
       --color=WHEN                   WHEN is 'auto' (def), 'always' or 'never'
@@ -162,6 +164,9 @@ for i in "$@"; do
 		;;
 	-F|--fast)
 		fail_fast=true
+		;;
+	-R|--reveal)
+		tee_dest=/dev/tty
 		;;
 	-v|--verbose)
 		verbose=true
@@ -296,7 +301,7 @@ for case in "${cases[@]}"; do
 	expected=${parts[1]}
 
 	# Run
-	actual="$($runner "$@" <<< "$input" 2>&1; echo ".$?")"
+	actual="$("$runner" "$@" <<< "$input" 2>&1 | tee $tee_dest; echo ".${PIPESTATUS[0]}")"
 
 	# Extract exit code from output
 	runner_exit_code="$(grep -Eo '[0-9]+$' <<< "$actual" | tail -1)" # https://stackoverflow.com/a/44092231 and other replies
