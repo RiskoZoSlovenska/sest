@@ -144,8 +144,7 @@ for i in "$@"; do
 				needs_compile=true
 				;;
 			*)
-				echo >&2 "$NAME: unknown runner '$runner'"
-				exit 1
+				runner="${i#*=}"
 				;;
 		esac
 		;;
@@ -189,12 +188,6 @@ done
 set -- "${positional_args[@]}" # Restore positional parameters
 
 
-# Verify that we have been passed positional arguments
-if [ $# = 0 ]; then
-	echo >&2 "$NAME: at least one positional argument is required"
-	exit 1
-fi
-
 # Set up colors (https://unix.stackexchange.com/a/10065)
 # If colors are not requested, the color variables will be empty strings and
 # we can still print them safely.
@@ -210,14 +203,11 @@ if [ "$color" = always ] || { [ "$color" = auto ] && [ -t 1 ]; }; then
 fi
 
 # Guess runner
-if [ -z $runner ]; then
+if [ -z "$runner" ]; then
 	# https://stackoverflow.com/a/965072
 	base=$(basename -- "$1")
 	namebody=${base#.} # Don't use leading period for checking if there are periods
-	if [ "$namebody" = "${namebody/./}"  ]; then # Check if contains periods by removing and comparing
-		echo >&2 "$NAME: no extension present - specify a runner manually"
-		exit 1
-	else
+	if [ "$namebody" != "${namebody/./}"  ]; then # Parse extension only if there is one
 		ext="${base##*.}"
 	fi
 
@@ -233,20 +223,23 @@ if [ -z $runner ]; then
 			runner=$RUNNER_CPP
 			needs_compile=true
 			;;
-		*)
-			echo >&2 "$NAME: unknown extension '$ext' - specify a runner manually"
-			exit 1
-			;;
 	esac
 fi
 
 # Verify runner
-echo "${blue}Using runner '$runner'$normal"
-
-if [ -z "$(command -v $runner)" ]; then
-	echo >&2 "$NAME: runner '$runner' was not found; verify that it is installed"
+if [ -z "$runner" ]; then
+	echo 2>&1 "$NAME: no runner was provided and it couldn't be guessed from args; provide one manually"
+	exit 1
+elif ! [ -x "$runner" ] && ! command -v "$runner" &>/dev/null; then
+	echo 2>&1 "$NAME: cannot use runner '$runner' since it is neither an executable file nor a command"
 	exit 1
 fi
+
+if [ -x "$runner" ]; then
+	runner="./$runner"
+fi
+
+echo "${blue}Using runner '$runner'$normal"
 
 if $needs_compile; then
 	compiled_out=$(mktemp)
