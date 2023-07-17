@@ -251,6 +251,8 @@ if $needs_compile; then
 		finish 1
 	else
 		verboseecho "$compile_msg"
+		runner=$compiled_out
+		set -- # Remove all command-line options since we consumed them already
 	fi
 fi
 
@@ -294,11 +296,7 @@ for case in "${cases[@]}"; do
 	expected=${parts[1]}
 
 	# Run
-	if ! $needs_compile; then
-		actual="$($runner "$@" <<< "$input" 2>&1; echo ".$?")"
-	else
-		actual="$($compiled_out <<< "$input" 2>&1; echo ".$?")"
-	fi
+	actual="$($runner "$@" <<< "$input" 2>&1; echo ".$?")"
 
 	# Extract exit code from output
 	runner_exit_code="$(grep -Eo '[0-9]+$' <<< "$actual" | tail -1)" # https://stackoverflow.com/a/44092231 and other replies
