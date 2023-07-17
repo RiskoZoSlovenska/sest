@@ -3,7 +3,7 @@
 # https://github.com/RiskoZoSlovenska/sest
 
 NAME='sest'
-VERSION='0.8.0'
+VERSION='0.8.1'
 
 NL=$'\n'
 RUNNER_PYTHON='python3'
@@ -306,8 +306,13 @@ for case in "${cases[@]}"; do
 	expected=${parts[1]}
 
 	# Run
+	time_start=$(date '+%s.%N')
+	
 	actual="$(timeout "$timeout" "$runner" "$@" <<< "$input" 2>&1 | tee $tee_dest; echo ".${PIPESTATUS[0]}")"
-
+	
+	time_end=$(date '+%s.%N')
+	run_time="$(bc -l <<< "scale=0; ($time_end - $time_start) * 1000 / 1")ms" # https://stackoverflow.com/a/13963375
+	
 	# Extract exit code from output
 	runner_exit_code="$(grep -Eo '[0-9]+$' <<< "$actual" | tail -1)" # https://stackoverflow.com/a/44092231 and other replies
 	actual="${actual%."$runner_exit_code"}"
@@ -326,7 +331,7 @@ for case in "${cases[@]}"; do
 			INT)  err_desc="interrupted" ;;
 		esac
 
-		echo "${red}Case $case_num: Runtime error! (code $runner_exit_code: $err_desc)$normal"
+		echo "${red}Case $case_num: Runtime error! ($run_time) (code $runner_exit_code: $err_desc)$normal"
 
 		if $print_output; then
 			printf "${blue}Output (%d):$normal\n%s\n" ${#actual} "$actual"
@@ -338,9 +343,9 @@ for case in "${cases[@]}"; do
 
 	# Check equality
 	if [ "$actual" = "$expected" ]; then
-		echo "${green}Case $case_num: OK$normal"
+		echo "${green}Case $case_num: OK ($run_time)$normal"
 	else
-		echo "${red}Case $case_num: Wrong output!$normal"
+		echo "${red}Case $case_num: Wrong output! ($run_time)$normal"
 
 		if $print_output; then
 			printf "${blue}Expected (%d):$normal\n%s\n${blue}Got (%d):$normal\n%s\n" \
