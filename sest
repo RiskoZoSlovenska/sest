@@ -255,7 +255,7 @@ if $needs_compile; then
 	compiled_out=$(mktemp)
 	verboseecho "${blue}Compiling to $compiled_out...$normal"
 
-	if ! compile_msg=$($runner -o "$compiled_out" "$@" 2>&1); then
+	if ! compile_msg=$($runner -o "$compiled_out" -O2 -Wall -Wextra "$@" 2>&1); then
 		echo "${red}Compilation error!$normal"
 		echo "$compile_msg"
 		finish 1
