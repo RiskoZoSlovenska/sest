@@ -308,7 +308,7 @@ for case in "${cases[@]}"; do
 	# Run
 	time_start=$(date '+%s.%N')
 	
-	actual="$(timeout "$timeout" "$runner" "$@" <<< "$input" 2>&1 | tee $tee_dest; echo ".${PIPESTATUS[0]}")"
+	actual="$(timeout --foreground "$timeout" "$runner" "$@" <<< "$input" 2>&1 | tee $tee_dest; echo ".${PIPESTATUS[0]}")"
 	
 	time_end=$(date '+%s.%N')
 	run_time="$(bc -l <<< "scale=0; ($time_end - $time_start) * 1000 / 1")ms" # https://stackoverflow.com/a/13963375
