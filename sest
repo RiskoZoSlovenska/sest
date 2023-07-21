@@ -88,7 +88,7 @@ Available options:
   -F, --fast                         Exit immediately on the first test failure
   -t, --timeout=X                    Timeout each case after X seconds
   -R, --reveal                       Mirror program output to the terminal
-  -v, --verbose                      Be more verbose (mainly when compiling)
+  -v, --verbose                      Be more verbose
   -o, --overview                     Do not print actual or expected test output
       --color=WHEN                   WHEN is 'auto' (def), 'always' or 'never'
 
@@ -280,7 +280,6 @@ declare cases
 split_str cases "$raw" "$case_delim$NL"
 
 # Run tests
-verboseecho "${blue}Running tests...$normal"
 case_num=0
 failures_num=0
 for case in "${cases[@]}"; do
@@ -304,6 +303,7 @@ for case in "${cases[@]}"; do
 
 	input=${parts[0]}
 	expected=${parts[1]}
+	verboseecho "${blue}Running test case $case_num...$normal"
 
 	# Run
 	time_start=$(date '+%s.%N')
