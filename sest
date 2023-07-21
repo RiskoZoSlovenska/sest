@@ -47,12 +47,6 @@ function finish {
 		exit_code=$TESTS_FAILED_CODE
 	fi
 	echo "${msg_color}$1 failure(s)$normal"
-
-	if [ -n "$compiled_out" ]; then
-		verboseecho "${blue}Removing $compiled_out...$normal"
-		rm "$compiled_out"
-	fi
-	echo "${blue}DONE$normal"
 	exit $exit_code
 }
 
@@ -294,6 +288,10 @@ if $needs_compile; then
 	else
 		verboseecho "$compile_msg"
 		runner=$compiled_out
+		trap '{
+			verboseecho "${blue}Removing $compiled_out...$normal"
+			rm "$compiled_out"
+		}' EXIT
 		set -- # Remove all command-line options since we consumed them already
 	fi
 fi
