@@ -277,8 +277,26 @@ if [ -x "$runner" ]; then
 	runner="./$runner"
 fi
 
-echo "${blue}Using runner '$runner'$normal"
 
+# Make sure case files exist
+if ! [ -r "$cases_file" ]; then
+	echo >&2 "$NAME: '$cases_file' is not a readable file"
+	exit 1
+elif $has_aux_cases_file && ! [ -r "$aux_cases_file" ]; then
+	echo >&2 "$NAME: '$aux_cases_file' is not a readable file"
+	exit 1
+fi
+
+
+# Print configuration
+in_out_files_name="'$cases_file'"
+if $has_aux_cases_file; then
+	in_out_files_name="$in_out_files_name and '$aux_cases_file'"
+fi
+echo "${blue}'$runner' against $in_out_files_name:$normal"
+
+
+# Compile
 if $needs_compile; then
 	compiled_out=$(mktemp)
 	verboseecho "${blue}Compiling to $compiled_out...$normal"
@@ -298,27 +316,16 @@ if $needs_compile; then
 	fi
 fi
 
-# Make sure case files exist
-if ! [ -r "$cases_file" ]; then
-	echo >&2 "$NAME: '$cases_file' is not a readable file"
-	exit 1
-elif $has_aux_cases_file && ! [ -r "$aux_cases_file" ]; then
-	echo >&2 "$NAME: '$aux_cases_file' is not a readable file"
-	exit 1
-fi
 
 # Read + split input file
 declare cases
+verboseecho "${blue}Reading test cases...$normal"
 if ! $has_aux_cases_file; then
-	verboseecho "${blue}Reading test cases from $cases_file...$normal"
-
 	declare raw
 	readfile raw "$cases_file"
 
 	split_str cases "$raw" "$case_delim$NL"
 else
-	verboseecho "${blue}Reading test case from $cases_file and $aux_cases_file...$normal"
-
 	declare single_case_input single_case_output
 	readfile single_case_input "$cases_file"
 	readfile single_case_output "$aux_cases_file"
