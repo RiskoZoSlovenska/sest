@@ -48,7 +48,7 @@ function finish {
 	fi
 	echo "${msg_color}$1 failure(s)$normal"
 
-	if [ -f "$compiled_out" ]; then
+	if [ -n "$compiled_out" ]; then
 		verboseecho "${blue}Removing $compiled_out...$normal"
 		rm "$compiled_out"
 	fi
@@ -295,11 +295,11 @@ if $needs_compile; then
 fi
 
 # Make sure case files exist
-if ! [ -f "$cases_file" ]; then
-	echo >&2 "$NAME: '$cases_file' is not a file"
+if ! [ -r "$cases_file" ]; then
+	echo >&2 "$NAME: '$cases_file' is not a readable file"
 	exit 1
-elif [ -n "$aux_cases_file" ] && ! [ -f "$aux_cases_file" ]; then
-	echo >&2 "$NAME: '$aux_cases_file' is not a file"
+elif [ -n "$aux_cases_file" ] && ! [ -r "$aux_cases_file" ]; then
+	echo >&2 "$NAME: '$aux_cases_file' is not a readable file"
 	exit 1
 fi
 
