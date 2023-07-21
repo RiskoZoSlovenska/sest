@@ -139,6 +139,10 @@ function print_version_and_exit {
 
 
 # Parse arguments (https://stackoverflow.com/a/14203146)
+if [ $# = 0 ]; then
+	print_help_and_exit
+fi
+
 positional_args=()
 option_parsing_disabled=false
 
