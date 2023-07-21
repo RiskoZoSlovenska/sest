@@ -10,6 +10,7 @@ RUNNER_PYTHON='python3'
 RUNNER_C='gcc'
 RUNNER_CPP='g++'
 TESTS_FAILED_CODE=64
+LONG_LINES=150 # How many lines is considered "long"
 
 file='tests.txt'
 case_delim='==='
@@ -51,6 +52,15 @@ function finish {
 	fi
 	echo "${blue}DONE$normal"
 	exit $exit_code
+}
+
+function repeat_message {
+	local message=$1
+	local printed=$2
+
+	if [ "$(wc -l <<< "$printed")" -ge $LONG_LINES ]; then
+		echo "${blue}The above output looks long; repeating the initial message:$NL> $normal$message$blue <$normal"
+	fi
 }
 
 # $1: name of output array variable
@@ -331,10 +341,12 @@ for case in "${cases[@]}"; do
 			INT)  err_desc="interrupted" ;;
 		esac
 
-		echo "${red}Case $case_num: Runtime error! ($run_time) (code $runner_exit_code: $err_desc)$normal"
+		message="${red}Case $case_num: Runtime error! ($run_time) (code $runner_exit_code: $err_desc)$normal"
+		echo "$message"
 
 		if $print_output; then
 			printf "${blue}Output (%d):$normal\n%s\n" ${#actual} "$actual"
+			repeat_message "$message" "$actual"
 		fi
 
 		((failures_num++))
@@ -345,11 +357,13 @@ for case in "${cases[@]}"; do
 	if [ "$actual" = "$expected" ]; then
 		echo "${green}Case $case_num: OK ($run_time)$normal"
 	else
-		echo "${red}Case $case_num: Wrong output! ($run_time)$normal"
+		message="${red}Case $case_num: Wrong output! ($run_time)$normal"
+		echo "$message"
 
 		if $print_output; then
 			printf "${blue}Expected (%d):$normal\n%s\n${blue}Got (%d):$normal\n%s\n" \
 				${#expected} "$expected" ${#actual} "$actual"
+			repeat_message "$message" "$expected$NL$actual"
 		fi
 
 		((failures_num++))
