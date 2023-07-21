@@ -11,8 +11,10 @@ RUNNER_C='gcc'
 RUNNER_CPP='g++'
 TESTS_FAILED_CODE=64
 LONG_LINES=150 # How many lines is considered "long"
+IN_OUT_FILES_SUFFIX="//"
 
-file='tests.txt'
+cases_file='tests.txt'
+aux_cases_file=
 case_delim='==='
 input_delim='---'
 runner=
@@ -63,6 +65,13 @@ function repeat_message {
 	fi
 }
 
+function readfile {
+	local -n content=$1
+
+	content=$(cat "$2" && echo '.')
+	content=${content%.} # https://unix.stackexchange.com/a/10804
+}
+
 # $1: name of output array variable
 # $2: text
 # $3: delimiter
@@ -89,7 +98,7 @@ Available options:
   -h, --help                         Show this help text
       --version                      Show version
   -r, --runner=RUNNER                Interpreter to run the tests with
-  -f, --file=FILE                    Read tests from FILE instead of ./$file
+  -f, --file=FILE                    Read tests from FILE instead of ./$cases_file
   -D, --case-delimiter=CASE_DELIM    Use CASE_DELIM instead of '$case_delim' for
                                        separating cases
   -d, --delimiter=DELIM              Use DELIM instead of '$input_delim' for separating
@@ -114,6 +123,9 @@ specified, it is guessed from the extension of the first argument.
 FILE should be a normal text file. Cases are separated from each other by
 CASE_DELIM, and the input/output of each case is separated by DELIM. Newlines
 following delimiters are ignored.
+
+If FILE is in the form X//, then only a single test case is run with input from
+X.in and expected output from X.out. Use this for massive inputs.
 
 Exits with a special error code of $TESTS_FAILED_CODE if any tests fail.
 EOM
@@ -163,7 +175,13 @@ for i in "$@"; do
 		esac
 		;;
 	-f=*|--file=*)
-		file="${i#*=}"
+		cases_file="${i#*=}"
+
+		base="${cases_file%"$IN_OUT_FILES_SUFFIX"}"
+		if [ "$cases_file" != "$base" ]; then
+			cases_file="$base.in"
+			aux_cases_file="$base.out"
+		fi
 		;;
 	-D=*|--case-delimiter=*)
 		case_delim="${i#*=}"
@@ -276,18 +294,33 @@ if $needs_compile; then
 	fi
 fi
 
-# Make sure cases file exists
-if ! [ -f "$file" ]; then
-	echo >&2 "$NAME: '$file' is not a file"
+# Make sure case files exist
+if ! [ -f "$cases_file" ]; then
+	echo >&2 "$NAME: '$cases_file' is not a file"
+	exit 1
+elif [ -n "$aux_cases_file" ] && ! [ -f "$aux_cases_file" ]; then
+	echo >&2 "$NAME: '$aux_cases_file' is not a file"
 	exit 1
 fi
 
 # Read + split input file
-verboseecho "${blue}Reading test cases from $file...$normal"
-raw=$(cat "$file" && echo '.')
-raw=${raw%.} # https://unix.stackexchange.com/a/10804
 declare cases
-split_str cases "$raw" "$case_delim$NL"
+if [ -z "$aux_cases_file" ]; then
+	verboseecho "${blue}Reading test cases from $cases_file...$normal"
+
+	declare raw
+	readfile raw "$cases_file"
+
+	split_str cases "$raw" "$case_delim$NL"
+else
+	verboseecho "${blue}Reading test case from $cases_file and $aux_cases_file...$normal"
+
+	declare single_case_input single_case_output
+	readfile single_case_input "$cases_file"
+	readfile single_case_output "$aux_cases_file"
+
+	cases+=("$single_case_input")
+fi
 
 # Run tests
 case_num=0
@@ -302,7 +335,11 @@ for case in "${cases[@]}"; do
 
 	# Split case
 	declare parts
-	split_str parts "$case" "$input_delim$NL"
+	if [ -z "$aux_cases_file" ]; then
+		split_str parts "$case" "$input_delim$NL"
+	else
+		parts=("$case" "$single_case_output")
+	fi
 
 	# Check case is formatted correctly
 	num_parts=${#parts[@]}
