@@ -15,6 +15,7 @@ IN_OUT_FILES_SUFFIX="//"
 
 cases_file='tests.txt'
 aux_cases_file=
+has_aux_cases_file=false
 case_delim='==='
 input_delim='---'
 runner=
@@ -179,6 +180,7 @@ for i in "$@"; do
 		if [ "$cases_file" != "$base" ]; then
 			cases_file="$base.in"
 			aux_cases_file="$base.out"
+			has_aux_cases_file=true
 		fi
 		;;
 	-D=*|--case-delimiter=*)
@@ -300,14 +302,14 @@ fi
 if ! [ -r "$cases_file" ]; then
 	echo >&2 "$NAME: '$cases_file' is not a readable file"
 	exit 1
-elif [ -n "$aux_cases_file" ] && ! [ -r "$aux_cases_file" ]; then
+elif $has_aux_cases_file && ! [ -r "$aux_cases_file" ]; then
 	echo >&2 "$NAME: '$aux_cases_file' is not a readable file"
 	exit 1
 fi
 
 # Read + split input file
 declare cases
-if [ -z "$aux_cases_file" ]; then
+if ! $has_aux_cases_file; then
 	verboseecho "${blue}Reading test cases from $cases_file...$normal"
 
 	declare raw
@@ -337,7 +339,7 @@ for case in "${cases[@]}"; do
 
 	# Split case
 	declare parts
-	if [ -z "$aux_cases_file" ]; then
+	if ! $has_aux_cases_file; then
 		split_str parts "$case" "$input_delim$NL"
 	else
 		parts=("$case" "$single_case_output")
