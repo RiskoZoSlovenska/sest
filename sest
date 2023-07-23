@@ -24,6 +24,7 @@ requested_case=
 fail_fast=false
 timeout=0
 tee_dest=/dev/null
+stderr_dest=/dev/stdout
 verbose=false
 print_output=true
 repeat_until_failure_cmd=
@@ -113,6 +114,7 @@ Available options:
       --repeat=CMD                   Repeat each test case until it fails,
                                        running CMD before every retry
       --repeat-max=N                 Repeat only up to N times
+	  --no-redir-err                 Don't redirect program stderr to stdout
       --color=WHEN                   WHEN is 'auto' (def), 'always' or 'never'
 
 Default runners:             Their extensions:          What they are:
@@ -224,6 +226,9 @@ for i in "$@"; do
 		;;
 	--repeat-max=*)
 		max_repeats="${i#*=}"
+		;;
+	--no-redir-err)
+		stderr_dest=/dev/stderr
 		;;
 	--color=*)
 	    color="${i#*=}"
@@ -393,7 +398,7 @@ for ((case_num = 1; case_num <= cases_total_num; case_num++)); do
 	# Run
 	time_start=$(date '+%s.%N')
 
-	actual="$(timeout --foreground "$timeout" "$runner" "$@" <<< "$input" 2>&1 | tee $tee_dest; echo ".${PIPESTATUS[0]}")"
+	actual="$(timeout --foreground "$timeout" "$runner" "$@" <<< "$input" 2>$stderr_dest | tee $tee_dest; echo ".${PIPESTATUS[0]}")"
 
 	time_end=$(date '+%s.%N')
 	run_time="$(bc -l <<< "scale=0; ($time_end - $time_start) * 1000 / 1")ms" # https://stackoverflow.com/a/13963375
