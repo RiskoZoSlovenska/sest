@@ -3,7 +3,7 @@
 # https://github.com/RiskoZoSlovenska/sest
 
 NAME='sest'
-VERSION='0.8.1'
+VERSION='0.8.2'
 
 NL=$'\n'
 RUNNER_PYTHON='python3'
@@ -89,7 +89,7 @@ function split_str {
 
 function print_help_and_exit {
 	cat <<- EOM
-$NAME - Risko's minimal testing utility for competitive(?) programming
+$NAME - Risko's minimal(?) testing utility for competitive(?) programming
 
 Usage: $NAME [OPTIONS...] ARGS... [-- ARGS...]
 
@@ -110,10 +110,10 @@ Available options:
   -o, --overview                     Do not print actual or expected test output
       --color=WHEN                   WHEN is 'auto' (def), 'always' or 'never'
 
-Available runners:             Their extensions:          What they are:
-  py, python, python3            .py, .py3                  Python ($RUNNER_PYTHON)
-  c                              .c                         C ($RUNNER_C)
-  c++, cpp                       .cpp, .cc                  C++ ($RUNNER_CPP)
+Default runners:             Their extensions:          What they are:
+  py, python, python3          .py, .py3                  Python ($RUNNER_PYTHON)
+  c                            .c                         C ($RUNNER_C)
+  c++, cpp                     .cpp, .cc                  C++ ($RUNNER_CPP)
 
 Reads tests from FILE; calls the RUNNER with the given ARGS and test input as
 stdin; verifies outputs. Handles compilation if necessary. If no RUNNER is
@@ -340,13 +340,13 @@ fi
 # Run tests
 case_num=0
 failures_num=0
-total_line_num=1
+next_line_num=1
 for case in "${cases[@]}"; do
 	((case_num++))
 
 	# Calculate line number
-	cur_line_num=$total_line_num
-	((total_line_num += $(count_lines "$case") + 1))
+	cur_line_num=$next_line_num
+	((next_line_num += $(count_lines "$case") + 1))
 
 	# Check for a requested case
 	if [ "$requested_case" ] && [ "$case_num" != "$requested_case" ]; then
@@ -374,12 +374,12 @@ for case in "${cases[@]}"; do
 
 	# Run
 	time_start=$(date '+%s.%N')
-	
+
 	actual="$(timeout --foreground "$timeout" "$runner" "$@" <<< "$input" 2>&1 | tee $tee_dest; echo ".${PIPESTATUS[0]}")"
-	
+
 	time_end=$(date '+%s.%N')
 	run_time="$(bc -l <<< "scale=0; ($time_end - $time_start) * 1000 / 1")ms" # https://stackoverflow.com/a/13963375
-	
+
 	# Extract exit code from output
 	runner_exit_code="$(grep -Eo '[0-9]+$' <<< "$actual" | tail -1)" # https://stackoverflow.com/a/44092231 and other replies
 	actual="${actual%."$runner_exit_code"}"

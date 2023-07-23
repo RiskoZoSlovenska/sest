@@ -3,13 +3,13 @@
 `sest` (a contraction of "simple" and "test") is a simple utility script which reads test cases from a file, then runs a target script with appropriate input and compares the expected and actual output.
 
 Focus is on ease-of-use. Some features include:
-* Automatically compile and run multiple tests
+* Automatically compile, run and time multiple tests
 * All tests are stored in the same file
 * Zero configuration required
 * Dead-simple syntax
 * Coloured and controllable output
 
-Currently only Python, C and C++ are supported, but PRs are more than welcome!
+Python, C and C++ are "supported" by default, but practically any other interpreter/compiled executable will work as a runner if manually specified.
 
 
 # Motivation
@@ -23,6 +23,6 @@ Thus, `sest` was born as a single-command solution to all the above woes.
 
 # Installation
 
-The only dependencies are a non-ancient Bash and common commands that should be available on any sane system.
+The only dependencies are a non-ancient Bash and common commands that should be available on any sane Linux system.
 
-Just clone/download the repo/file and then copy/move/link the file to your `bin` folder.
+Just clone/download the repo/file and then copy/move/link the file to your `bin` folder/wherever it is you store your executables.
