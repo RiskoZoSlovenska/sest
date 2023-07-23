@@ -26,6 +26,8 @@ timeout=0
 tee_dest=/dev/null
 verbose=false
 print_output=true
+repeat_until_failure_cmd=
+max_repeats=
 color='auto'
 
 
@@ -108,6 +110,9 @@ Available options:
   -R, --reveal                       Mirror program output to the terminal
   -v, --verbose                      Be more verbose
   -o, --overview                     Do not print actual or expected test output
+      --repeat=CMD                   Repeat each test case until it fails,
+                                       running CMD before every retry
+      --repeat-max=N                 Repeat only up to N times
       --color=WHEN                   WHEN is 'auto' (def), 'always' or 'never'
 
 Default runners:             Their extensions:          What they are:
@@ -210,6 +215,15 @@ for i in "$@"; do
 		;;
 	-o|--overview)
 		print_output=false
+		;;
+	--repeat=*)
+		repeat_until_failure_cmd="${i#*=}"
+		;;
+	--repeat)
+		repeat_until_failure_cmd=true
+		;;
+	--repeat-max=*)
+		max_repeats="${i#*=}"
 		;;
 	--color=*)
 	    color="${i#*=}"
@@ -322,27 +336,31 @@ fi
 
 
 # Read + split input file
-declare cases
-verboseecho "${blue}Reading test cases...$normal"
-if ! $has_aux_cases_file; then
-	declare raw
-	readfile raw "$cases_file"
+declare cases single_case_output
+function read_cases_files {
+	verboseecho "${blue}Reading test cases...$normal"
+	if ! $has_aux_cases_file; then
+		declare raw
+		readfile raw "$cases_file"
 
-	split_str cases "$raw" "$case_delim$NL"
-else
-	declare single_case_input single_case_output
-	readfile single_case_input "$cases_file"
-	readfile single_case_output "$aux_cases_file"
+		split_str cases "$raw" "$case_delim$NL"
+	else
+		declare single_case_input
+		readfile single_case_input "$cases_file"
+		readfile single_case_output "$aux_cases_file"
 
-	cases+=("$single_case_input")
-fi
+		cases=("$single_case_input")
+	fi
+}
+read_cases_files
 
 # Run tests
-case_num=0
+cases_total_num=${#cases[@]}
+attempt_num=1;
 failures_num=0
 next_line_num=1
-for case in "${cases[@]}"; do
-	((case_num++))
+for ((case_num = 1; case_num <= cases_total_num; case_num++)); do
+	case="${cases[$((case_num - 1))]}"
 
 	# Calculate line number
 	cur_line_num=$next_line_num
@@ -407,6 +425,7 @@ for case in "${cases[@]}"; do
 		fi
 
 		((failures_num++))
+		attempt_num=1
 		if $fail_fast; then finish $failures_num; else continue; fi
 	fi
 
@@ -424,8 +443,23 @@ for case in "${cases[@]}"; do
 		fi
 
 		((failures_num++))
+		attempt_num=1
 		if $fail_fast; then finish $failures_num; else continue; fi
 	fi
+
+	# At this point, the case succeeded; retry if requested
+	if [ -n "$repeat_until_failure_cmd" ] && { [ -z "$max_repeats" ] || [ $attempt_num -lt "$max_repeats" ]; }; then
+		$repeat_until_failure_cmd
+		read_cases_files
+
+		# Do some magic to retry the current case
+		((case_num--))
+		((attempt_num++))
+		next_line_num=$cur_line_num
+		continue
+	fi
+
+	attempt_num=1
 done
 
 finish $failures_num
