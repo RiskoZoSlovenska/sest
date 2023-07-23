@@ -270,10 +270,10 @@ fi
 
 # Verify runner
 if [ -z "$runner" ]; then
-	echo 2>&1 "$NAME: no runner was provided and it couldn't be guessed from args; provide one manually"
+	echo >&2 "$NAME: no runner was provided and it couldn't be guessed from args; provide one manually"
 	exit 1
 elif ! [ -x "$runner" ] && ! command -v "$runner" &>/dev/null; then
-	echo 2>&1 "$NAME: cannot use runner '$runner' since it is neither an executable file nor a command"
+	echo >&2 "$NAME: cannot use runner '$runner' since it is neither an executable file nor a command"
 	exit 1
 fi
 
