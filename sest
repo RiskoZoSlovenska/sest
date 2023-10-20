@@ -1,9 +1,9 @@
 #!/bin/bash
-# Tiny bash script to run very simple tests.
+# Bash script to run simple tests.
 # https://github.com/RiskoZoSlovenska/sest
 
 NAME='sest'
-VERSION='0.9.0'
+VERSION='0.9.1'
 
 NL=$'\n'
 RUNNER_PYTHON='python3'
@@ -368,7 +368,7 @@ for ((case_num = 1; case_num <= cases_total_num; case_num++)); do
 	case="${cases[$((case_num - 1))]}"
 
 	# Calculate line number
-	cur_line_num=$next_line_num
+	line_num=$next_line_num
 	((next_line_num += $(count_lines "$case") + 1))
 
 	# Check for a requested case
@@ -387,13 +387,13 @@ for ((case_num = 1; case_num <= cases_total_num; case_num++)); do
 	# Check case is formatted correctly
 	num_parts=${#parts[@]}
 	if [ "$num_parts" != 2 ]; then
-		echo >&2 "$NAME: case $case_num is split up into $num_parts section(s), but exactly 2 are expected"
+		echo >&2 "$NAME: case $case_num (line $line_num) is split up into $num_parts section(s), but exactly 2 are expected"
 		exit 1
 	fi
 
 	input=${parts[0]}
 	expected=${parts[1]}
-	verboseecho "${blue}Running test case $case_num (line $cur_line_num)...$normal"
+	verboseecho "${blue}Running test case $case_num (line $line_num)...$normal"
 
 	# Run
 	time_start=$(date '+%s.%N')
@@ -421,7 +421,7 @@ for ((case_num = 1; case_num <= cases_total_num; case_num++)); do
 			INT)  err_desc="interrupted" ;;
 		esac
 
-		message="${red}Case $case_num: Runtime error! ($run_time) (code $runner_exit_code: $err_desc)$normal"
+		message="${red}Case $case_num: Runtime error! ($run_time) (code $runner_exit_code: $err_desc) (line $line_num)$normal"
 		echo "$message"
 
 		if $print_output; then
@@ -438,7 +438,7 @@ for ((case_num = 1; case_num <= cases_total_num; case_num++)); do
 	if [ "$actual" = "$expected" ]; then
 		echo "${green}Case $case_num: OK ($run_time)$normal"
 	else
-		message="${red}Case $case_num: Wrong output! ($run_time)$normal"
+		message="${red}Case $case_num: Wrong output! ($run_time) (line $line_num)$normal"
 		echo "$message"
 
 		if $print_output; then
@@ -460,7 +460,7 @@ for ((case_num = 1; case_num <= cases_total_num; case_num++)); do
 		# Do some magic to retry the current case
 		((case_num--))
 		((attempt_num++))
-		next_line_num=$cur_line_num
+		next_line_num=$line_num
 		continue
 	fi
 
