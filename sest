@@ -3,7 +3,7 @@
 # https://github.com/RiskoZoSlovenska/sest
 
 NAME='sest'
-VERSION='0.9.2'
+VERSION='0.9.3'
 
 NL=$'\n'
 RUNNER_PYTHON='python3'
@@ -110,12 +110,12 @@ Available options:
   -F, --fast                         Exit immediately on the first test failure
   -t, --timeout=X                    Timeout each case after X seconds
   -R, --reveal                       Mirror program output to the terminal
+  -e, --no-redir-err                 Don't redirect program stderr to stdout
   -v, --verbose                      Be more verbose
   -o, --overview                     Do not print actual or expected test output
-      --repeat=CMD                   Repeat each test case until it fails,
-                                       running CMD before every retry
+  -p, --repeat=CMD                   Repeat each test case until it fails,
+                                       running CMD (optional) before every retry
       --repeat-max=N                 Repeat only up to N times
-	  --no-redir-err                 Don't redirect program stderr to stdout
       --color=WHEN                   WHEN is 'auto' (def), 'always' or 'never'
 
 Default runners:             Their extensions:          What they are:
@@ -213,23 +213,23 @@ for i in "$@"; do
 	-R|--reveal)
 		tee_dest=/dev/tty
 		;;
+	-e|--no-redir-err)
+		stderr_dest=/dev/stderr
+		;;
 	-v|--verbose)
 		verbose=true
 		;;
 	-o|--overview)
 		print_output=false
 		;;
-	--repeat=*)
+	-p=*|--repeat=*)
 		repeat_until_failure_cmd="${i#*=}"
 		;;
-	--repeat)
+	-p|--repeat)
 		repeat_until_failure_cmd=true
 		;;
 	--repeat-max=*)
 		max_repeats="${i#*=}"
-		;;
-	--no-redir-err)
-		stderr_dest=/dev/stderr
 		;;
 	--color=*)
 	    color="${i#*=}"
