@@ -3,7 +3,7 @@
 # https://github.com/RiskoZoSlovenska/sest
 
 NAME='sest'
-VERSION='0.9.3'
+VERSION='0.9.4'
 
 NL=$'\n'
 RUNNER_PYTHON='python3'
@@ -102,10 +102,8 @@ Available options:
       --version                      Show version
   -r, --runner=RUNNER                Interpreter to run the tests with
   -f, --file=FILE                    Read tests from FILE
-  -D, --case-delimiter=CASE_DELIM    Use CASE_DELIM instead of '$case_delim' for
-                                       separating cases
-  -d, --delimiter=DELIM              Use DELIM instead of '$input_delim' for separating
-                                       input/output
+  -D, --case-delimiter=CASE_DELIM    Use CASE_DELIM for separating cases
+  -d, --delimiter=DELIM              Use DELIM for separating input/output
   -c, --case=CASE_NUM                Run only one specific test case
   -F, --fast                         Exit immediately on the first test failure
   -t, --timeout=X                    Timeout each case after X seconds
@@ -123,13 +121,13 @@ Default runners:             Their extensions:          What they are:
   c                            .c                         C ($RUNNER_C)
   c++, cpp                     .cpp, .cc                  C++ ($RUNNER_CPP)
 
-Reads tests from FILE ; calls the RUNNER with the given
-ARGS and test input as stdin; verifies outputs. Handles compilation if needed.
-If no RUNNER is specified, it is guessed from the extension of the first arg.
+Reads tests from FILE; calls the RUNNER with the given ARGS and test input as
+stdin; verifies outputs. Handles compilation if needed. If no RUNNER is
+specified, it is guessed from the extension of the first argument.
 
-FILE (default ./tests.txt) should be a normal text file. Cases are separated
-from each other by CASE_DELIM, and the input/output of each case is separated by
-DELIM. Newlines following delimiters are ignored.
+FILE (default $cases_file) should be a normal text file. Cases are separated
+from each other by CASE_DELIM (default $case_delim), and the input/output of each case
+is separated by DELIM (default $input_delim). Newlines following delimiters are ignored.
 
 If FILE is in the form X//, then only a single test case is run with input from
 X.in and expected output from X.out. Use this for massive inputs.
